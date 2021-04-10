@@ -3,7 +3,7 @@ using UsersApi.Models;
 
 namespace UsersApi.Contracts
 {
-    public class UserSearchResponse
+    public class UserSearchByGeoResponse
     {
         public List<UserDetailsResponse> users { get; set; }
     }

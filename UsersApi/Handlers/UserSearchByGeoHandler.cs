@@ -9,7 +9,7 @@ using UsersApi.Interfaces;
 
 namespace UsersApi.Handlers
 {
-    public class UserSearchHandler : IRequestHandler<UserSearchRequest, UserSearchResponse>
+    public class UserSearchByGeoHandler : IRequestHandler<UserSearchByGeoRequest, UserSearchByGeoResponse>
     {
         private readonly ILogger _logger;
         private readonly IUserService _userService;
@@ -18,7 +18,7 @@ namespace UsersApi.Handlers
         private readonly ICommentService _commentService;
         private readonly IAlbumService _albumService;
         private readonly IPhotoService _photoService;
-        public UserSearchHandler(ILogger logger, IUserService userService, ITodoService todoService, IPostService postService, ICommentService commentService, IAlbumService albumService, IPhotoService photoService)
+        public UserSearchByGeoHandler(ILogger logger, IUserService userService, ITodoService todoService, IPostService postService, ICommentService commentService, IAlbumService albumService, IPhotoService photoService)
         {
             _logger = logger.ForContext("SourceContext", this.GetType().Name);
             _userService = userService;
@@ -28,12 +28,12 @@ namespace UsersApi.Handlers
             _albumService = albumService;
             _photoService = photoService;
         }
-        public async Task<UserSearchResponse> Handle(UserSearchRequest request, CancellationToken cancellationToken)
+        public async Task<UserSearchByGeoResponse> Handle(UserSearchByGeoRequest request, CancellationToken cancellationToken)
         {
-            _logger.Information("Handle User Search Request");
+            _logger.Information("Handle User Search by Geo Location Request");
             List<UserDetailsResponse> userResponse = new List<UserDetailsResponse>();
             var allUsers = await _userService.GetUsers();
-            var users = allUsers.Where(x => x.Name.Contains(request.SearchText) || x.Email.Contains(request.SearchText) || x.Address.City.Contains(request.SearchText)).ToList();
+            var users = allUsers.Where(x => x.Address.Geo.Lat == request.Lat && x.Address.Geo.Lng == request.Lon).ToList();
 
             foreach (var user in users)
             {
@@ -52,8 +52,8 @@ namespace UsersApi.Handlers
                 }
                 userResponse.Add(new UserDetailsResponse { User = user, Todos = todos, Posts = posts, Albums = albums });
             }
-            _logger.Information("Return User Search Response");
-            return new UserSearchResponse { users = userResponse };
+            _logger.Information("Return User Search by Geo Location Response");
+            return new UserSearchByGeoResponse { users = userResponse };
         }
     }
 }
