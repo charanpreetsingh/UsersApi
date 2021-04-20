@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UsersApi.Contracts;
 using UsersApi.Interfaces;
+using UsersApi.Models;
 
 namespace UsersApi.Handlers
 {
@@ -33,7 +34,23 @@ namespace UsersApi.Handlers
             _logger.Information("Handle User Search Request");
             List<UserDetailsResponse> userResponse = new List<UserDetailsResponse>();
             var allUsers = await _userService.GetUsers();
-            var users = allUsers.Where(x => x.Name.Contains(request.SearchText) || x.Email.Contains(request.SearchText) || x.Address.City.Contains(request.SearchText)).ToList();
+            
+            var users = allUsers.Where(x => request.SearchText.Contains(x.Id)).ToList();
+            
+            List<User> listOfUsers = new List<User>();
+            Dictionary<int, User> dictUsers = new Dictionary<int, User>();
+
+            //SearchText - 10k
+            //allUsers - 50 mil
+            foreach(int id in request.SearchText) //- 10000 times
+            {
+                dictUsers.TryGetValue(id, out User user);
+
+                User u = allUsers.Where(x => x.Id == id).FirstOrDefault(); //50 mil - 50 mil x 10000
+
+                if (u != null)
+                    listOfUsers.Add(u);
+            }
 
             foreach (var user in users)
             {

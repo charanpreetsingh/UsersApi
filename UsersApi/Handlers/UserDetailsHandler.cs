@@ -19,9 +19,7 @@ namespace UsersApi.Handlers
         private readonly ICommentService _commentService;
         private readonly IAlbumService _albumService;
         private readonly IPhotoService _photoService;
-
-        List<Post> myPosts;
-        List<Album> myAlbums;
+        private UserDetailsResponse _userDetailsResponse;
 
         public UserDetailsHandler(ILogger logger, IUserService userService, ITodoService todoService, IPostService postService, ICommentService commentService, IAlbumService albumService, IPhotoService photoService)
         {
@@ -33,62 +31,64 @@ namespace UsersApi.Handlers
             _albumService = albumService;
             _photoService = photoService;
 
-            myPosts = new List<Post>();
-            myAlbums = new List<Album>();
+            _userDetailsResponse = new UserDetailsResponse();
         }
         public async Task<UserDetailsResponse> Handle(UserDetailsRequest request, CancellationToken cancellationToken)
         {
             _logger.Information("Handle User Details Request");
-            var watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
 
-            List<Task> allTasks = new List<Task>();
-
-            var user = await _userService.GetUserById(request.UserId);
-            var todos = await _todoService.GetTodoByUserId(request.UserId);
-            var posts = await _postService.GetPostsByUserId(request.UserId);
-            var albums = await _albumService.GetAlbumsByUserId(request.UserId);
-
-            allTasks.Add(GetComments(posts));
-            //posts = await GetComments(posts);
-            allTasks.Add(GetPhotos(albums));
+            List<Task> allTasks = new List<Task>
+            {
+                GetUser(request.UserId),
+                GetTodos(request.UserId),
+                GetComments(request.UserId),
+                GetPhotos(request.UserId)
+            };
 
             await Task.WhenAll(allTasks);
 
-            //albums = await GetPhotos(albums);
-            watch.Stop();
-            _logger.Information($"Execution Time: {watch.ElapsedMilliseconds} ms");
             _logger.Information("Return User Details Response");
-            return new UserDetailsResponse { User = user, Todos = todos, Posts = myPosts, Albums = myAlbums };
+
+            return _userDetailsResponse;
         }
 
-        private async Task GetComments(List<Post> posts)
+        private async Task GetUser(int userId)
+        {
+            _userDetailsResponse.User = await _userService.GetUserById(userId);
+        }
+
+        private async Task GetTodos(int userId)
+        {
+            _userDetailsResponse.Todos = await _todoService.GetTodoByUserId(userId);
+        }
+
+        private async Task GetComments(int userId)
         {
             _logger.Information("GetComments Called..");
 
+            var posts = await _postService.GetPostsByUserId(userId);
             List<Task<Post>> listOfTasks = new List<Task<Post>>();
 
             foreach (var post in posts)
             {
                 listOfTasks.Add(RunCommentsTasks(post));
             }
-            var updatedPost = await Task.WhenAll<Post>(listOfTasks);
-            myPosts = updatedPost.ToList();
-            //return updatedPost.ToList();
+
+            _userDetailsResponse.Posts = (await Task.WhenAll<Post>(listOfTasks)).ToList();
         }
 
-        private async Task GetPhotos(List<Album> albums)
+        private async Task GetPhotos(int userId)
         {
             _logger.Information("GetPhotos Called..");
+            var albums = await _albumService.GetAlbumsByUserId(userId);
             List<Task<Album>> listOfTasks = new List<Task<Album>>();
 
             foreach (var album in albums)
             {
                 listOfTasks.Add(RunPhotosTasks(album));
             }
-            var updatedAlbumns = await Task.WhenAll<Album>(listOfTasks);
-            myAlbums = updatedAlbumns.ToList();
-            //return updatedAlbumns.ToList();
+
+            _userDetailsResponse.Albums = (await Task.WhenAll<Album>(listOfTasks)).ToList();
         }
         private async Task<Album> RunPhotosTasks(Album album)
         {
