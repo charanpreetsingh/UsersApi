@@ -25,8 +25,6 @@ namespace UsersApi.Handlers
         }
         public async Task<UserSearchResponse> Handle(UserSearchRequest request, CancellationToken cancellationToken)
         {
-            var watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
             _logger.Information("Handle User Search Request");
             var allUsers = await _userService.GetUsers();
             Dictionary<int, User> allUserDictionary = allUsers.ToDictionary(m => m.Id);
@@ -41,8 +39,6 @@ namespace UsersApi.Handlers
                 }
             }
             userResponse = (await Task.WhenAll<UserDetailsResponse>(listOfTasks)).ToList();
-            watch.Stop();
-            _logger.Information($"Execution Time: {watch.ElapsedMilliseconds} ms");
             _logger.Information("Return User Search Response");
             return new UserSearchResponse { users = userResponse };
         }
