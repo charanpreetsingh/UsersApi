@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Serilog;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UsersApi.Contracts;
 
@@ -44,13 +45,13 @@ namespace UsersApi.Controllers
                 return BadRequest();
             }
         }
-        [HttpGet]
-        [Route("search/{text}")]
-        public async Task<ActionResult<UserSearchResponse>> SearchUser(string text)
+        [HttpPost]
+        [Route("search")]
+        public async Task<ActionResult<UserSearchResponse>> SearchUser([FromBody] List<int> searchUserIds)
         {
             try
             {
-                UserSearchRequest request = new UserSearchRequest { SearchText = text };
+                UserSearchRequest request = new UserSearchRequest { SearchUserIds = searchUserIds };
                 _logger.Information("Request Received - {@request}", JsonConvert.SerializeObject(request));
 
                 var result = await _mediator.Send(request);

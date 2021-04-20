@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UsersApi.Contracts;
 using UsersApi.Interfaces;
+using UsersApi.Models;
 
 namespace UsersApi.Handlers
 {
@@ -14,21 +15,22 @@ namespace UsersApi.Handlers
         private readonly ILogger _logger;
         private readonly IUserService _userService;
         private readonly IUserDetailsService _userDetailsService;
+        private List<UserDetailsResponse> userResponse;
         public UserSearchHandler(ILogger logger, IUserService userService, IUserDetailsService userDetailsService)
         {
             _logger = logger.ForContext("SourceContext", this.GetType().Name);
             _userService = userService;
             _userDetailsService = userDetailsService;
+            userResponse = new List<UserDetailsResponse>();
         }
         public async Task<UserSearchResponse> Handle(UserSearchRequest request, CancellationToken cancellationToken)
         {
+            var watch = new System.Diagnostics.Stopwatch();
+            watch.Start();
             _logger.Information("Handle User Search Request");
-            UserDetailsResponse userDetailsResponse;
-            List<UserDetailsResponse> userResponse = new List<UserDetailsResponse>();
             var allUsers = await _userService.GetUsers();
-            
-            var users = allUsers.Where(x => x.Name.Contains(request.SearchText)).ToList();
-            
+            Dictionary<int, User> allUserDictionary = allUsers.ToDictionary(m => m.Id);
+            var users = allUserDictionary.Where(i => request.SearchUserIds.Contains(i.Key)).ToDictionary(i => i.Key, i => i.Value);
             //List<User> listOfUsers = new List<User>();
             //Dictionary<int, User> dictUsers = new Dictionary<int, User>();
 
@@ -44,13 +46,22 @@ namespace UsersApi.Handlers
             //        listOfUsers.Add(u);
             //}
 
+            List<Task<UserDetailsResponse>> listOfTasks = new List<Task<UserDetailsResponse>>();
+
             foreach (var user in users)
             {
-                userDetailsResponse = await _userDetailsService.GetUserDetailsById(user.Id, false);
-                userDetailsResponse.User = user;
-                userResponse.Add(userDetailsResponse);
+                listOfTasks.Add(_userDetailsService.GetUserDetailsById(user.Key, user.Value));
             }
+            userResponse = (await Task.WhenAll<UserDetailsResponse>(listOfTasks)).ToList();
 
+            //foreach (var user in users)
+            //{
+            //    var userDetailsResponse = await _userDetailsService.GetUserDetailsById(user.Key, false);
+            //    userDetailsResponse.User = user.Value;
+            //    userResponse.Add(userDetailsResponse);
+            //}
+            watch.Stop();
+            _logger.Information($"Execution Time: {watch.ElapsedMilliseconds} ms");
             _logger.Information("Return User Search Response");
             return new UserSearchResponse { users = userResponse };
         }

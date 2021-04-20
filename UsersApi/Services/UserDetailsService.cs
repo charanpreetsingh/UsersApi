@@ -32,7 +32,8 @@ namespace UsersApi.Services
             _userDetailsResponse = new UserDetailsResponse();
         }
 
-        public async Task<UserDetailsResponse> GetUserDetailsById(int userId, bool fetchUser)
+        public async Task<UserDetailsResponse> GetUserDetailsById(int userId, User user)
+        //public async Task<UserDetailsResponse> GetUserDetailsById(int userId, bool fetchUser)
         {
             List<Task> allTasks = new List<Task>
             {
@@ -41,9 +42,16 @@ namespace UsersApi.Services
                 GetPhotos(userId)
             };
 
-            if (fetchUser)
+            //if (fetchUser)
+            //    allTasks.Add(GetUser(userId));
+            if (user == null)
+            {
                 allTasks.Add(GetUser(userId));
-
+            }
+            else
+            {
+                _userDetailsResponse.User = user;
+            }
             await Task.WhenAll(allTasks);
 
             return _userDetailsResponse;
