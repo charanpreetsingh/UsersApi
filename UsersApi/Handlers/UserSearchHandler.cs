@@ -35,7 +35,10 @@ namespace UsersApi.Handlers
             {
                 User user;
                 allUserDictionary.TryGetValue(userid, out user);
-                listOfTasks.Add(_userDetailsService.GetUserDetailsById(user.Id, user));
+                if(user != null)
+                {
+                    listOfTasks.Add(_userDetailsService.GetUserDetailsById(user.Id, user));
+                }
             }
             userResponse = (await Task.WhenAll<UserDetailsResponse>(listOfTasks)).ToList();
             watch.Stop();
