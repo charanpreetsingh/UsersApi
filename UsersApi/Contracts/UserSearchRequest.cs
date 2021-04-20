@@ -5,6 +5,6 @@ namespace UsersApi.Contracts
 {
     public class UserSearchRequest : IRequest<UserSearchResponse>
     {
-        public List<int> SearchText { get; set; }
+        public string SearchText { get; set; }
     }
 }
