@@ -21,7 +21,6 @@ namespace UsersApi.Handlers
         {
             _logger.Information("Handle User Details Request");
 
-            //var userDetailsResponse = await _userDetailsService.GetUserDetailsById(request.UserId, false);
             var userDetailsResponse = await _userDetailsService.GetUserDetailsById(request.UserId, null);
 
             _logger.Information("Return User Details Response");

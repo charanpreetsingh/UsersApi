@@ -30,36 +30,14 @@ namespace UsersApi.Handlers
             _logger.Information("Handle User Search Request");
             var allUsers = await _userService.GetUsers();
             Dictionary<int, User> allUserDictionary = allUsers.ToDictionary(m => m.Id);
-            var users = allUserDictionary.Where(i => request.SearchUserIds.Contains(i.Key)).ToDictionary(i => i.Key, i => i.Value);
-            //List<User> listOfUsers = new List<User>();
-            //Dictionary<int, User> dictUsers = new Dictionary<int, User>();
-
-            ////SearchText - 10k
-            ////allUsers - 50 mil
-            //foreach(int id in request.SearchText) //- 10000 times
-            //{
-            //    dictUsers.TryGetValue(id, out User user);
-
-            //    User u = allUsers.Where(x => x.Id == id).FirstOrDefault(); //50 mil - 50 mil x 10000
-
-            //    if (u != null)
-            //        listOfUsers.Add(u);
-            //}
-
             List<Task<UserDetailsResponse>> listOfTasks = new List<Task<UserDetailsResponse>>();
-
-            foreach (var user in users)
+            foreach (var userid in request.SearchUserIds)
             {
-                listOfTasks.Add(_userDetailsService.GetUserDetailsById(user.Key, user.Value));
+                User user;
+                allUserDictionary.TryGetValue(userid, out user);
+                listOfTasks.Add(_userDetailsService.GetUserDetailsById(user.Id, user));
             }
             userResponse = (await Task.WhenAll<UserDetailsResponse>(listOfTasks)).ToList();
-
-            //foreach (var user in users)
-            //{
-            //    var userDetailsResponse = await _userDetailsService.GetUserDetailsById(user.Key, false);
-            //    userDetailsResponse.User = user.Value;
-            //    userResponse.Add(userDetailsResponse);
-            //}
             watch.Stop();
             _logger.Information($"Execution Time: {watch.ElapsedMilliseconds} ms");
             _logger.Information("Return User Search Response");

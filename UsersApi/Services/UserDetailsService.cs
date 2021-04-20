@@ -33,7 +33,6 @@ namespace UsersApi.Services
         }
 
         public async Task<UserDetailsResponse> GetUserDetailsById(int userId, User user)
-        //public async Task<UserDetailsResponse> GetUserDetailsById(int userId, bool fetchUser)
         {
             List<Task> allTasks = new List<Task>
             {
@@ -42,8 +41,6 @@ namespace UsersApi.Services
                 GetPhotos(userId)
             };
 
-            //if (fetchUser)
-            //    allTasks.Add(GetUser(userId));
             if (user == null)
             {
                 allTasks.Add(GetUser(userId));
