@@ -12,3 +12,5 @@ The project exposes following endpoints:
 /api/User/search - Search by Ids
 /api/User/searchbygeo - Search by lat long
 /summary - Summary of users
+
+This project utilizes axync mathods and a sample implentation on how to execute multiple tasks in parellel for performance optimization.
